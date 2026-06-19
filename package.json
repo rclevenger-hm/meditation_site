@@ -1,0 +1,9 @@
+{
+  "name": "guided-meditation-library",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A static guided meditation app with narrated routines and looping ambient music.",
+  "scripts": {
+    "test": "node tests/static.test.mjs"
+  }
+}
