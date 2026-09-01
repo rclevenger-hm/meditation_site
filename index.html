@@ -5,9 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Guided Meditation Library</title>
     <link rel="stylesheet" href="styles.css?v=11">
+    <link rel="stylesheet" href="accessibility.css?v=1">
   </head>
   <body>
-    <main class="practice" aria-labelledby="routine-title">
+    <a class="skip-link" href="#meditation-practice">Skip to meditation</a>
+    <main id="meditation-practice" class="practice" aria-labelledby="routine-title">
       <header class="topbar">
         <h1 id="routine-title">Guided Meditation Library</h1>
         <div class="top-icons">
@@ -89,38 +91,23 @@
         <ol class="steps" aria-label="Routine stages">
           <li class="step is-active" data-step="0">
             <span class="step-number">1</span>
-            <span class="step-copy">
-              <strong>Preparation</strong>
-              <small>0:00 - 0:14</small>
-            </span>
+            <span class="step-copy"><strong>Preparation</strong><small>0:00 - 0:14</small></span>
           </li>
           <li class="step" data-step="1">
             <span class="step-number">2</span>
-            <span class="step-copy">
-              <strong>Visualization</strong>
-              <small>0:14 - 0:26</small>
-            </span>
+            <span class="step-copy"><strong>Visualization</strong><small>0:14 - 0:26</small></span>
           </li>
           <li class="step" data-step="2">
             <span class="step-number">3</span>
-            <span class="step-copy">
-              <strong>Anchoring</strong>
-              <small>0:26 - 0:38</small>
-            </span>
+            <span class="step-copy"><strong>Anchoring</strong><small>0:26 - 0:38</small></span>
           </li>
           <li class="step" data-step="3">
             <span class="step-number">4</span>
-            <span class="step-copy">
-              <strong>Feeling</strong>
-              <small>0:38 - 0:50</small>
-            </span>
+            <span class="step-copy"><strong>Feeling</strong><small>0:38 - 0:50</small></span>
           </li>
           <li class="step" data-step="4">
             <span class="step-number">5</span>
-            <span class="step-copy">
-              <strong>Silence</strong>
-              <small>0:50 - 1:00</small>
-            </span>
+            <span class="step-copy"><strong>Silence</strong><small>0:50 - 1:00</small></span>
           </li>
         </ol>
       </section>
@@ -128,22 +115,14 @@
       <nav class="controls" aria-label="Routine controls">
         <button id="restart" class="control-button" type="button">
           <span class="control-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24">
-              <path d="M5 6v5h5"></path>
-              <path d="M5.8 11a7 7 0 1 0 1.7-4.5"></path>
-            </svg>
+            <svg viewBox="0 0 24 24"><path d="M5 6v5h5"></path><path d="M5.8 11a7 7 0 1 0 1.7-4.5"></path></svg>
           </span>
           <span>Restart</span>
         </button>
         <button id="start-pause" class="control-button primary" type="button" aria-label="Start routine">
           <span class="control-icon" aria-hidden="true">
-            <svg class="play-icon" viewBox="0 0 24 24">
-              <path d="m8 5 11 7-11 7z"></path>
-            </svg>
-            <svg class="pause-icon" viewBox="0 0 24 24">
-              <path d="M8 5v14"></path>
-              <path d="M16 5v14"></path>
-            </svg>
+            <svg class="play-icon" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7z"></path></svg>
+            <svg class="pause-icon" viewBox="0 0 24 24"><path d="M8 5v14"></path><path d="M16 5v14"></path></svg>
           </span>
           <span class="button-text">Start</span>
         </button>
@@ -151,11 +130,7 @@
 
       <footer class="footer-line">
         <span class="wave-mark" aria-hidden="true">
-          <svg viewBox="0 0 28 28">
-            <path d="M3 10c3 0 3-3 6-3s3 3 6 3 3-3 6-3 3 3 4 3"></path>
-            <path d="M3 15c3 0 3-3 6-3s3 3 6 3 3-3 6-3 3 3 4 3"></path>
-            <path d="M3 20c3 0 3-3 6-3s3 3 6 3 3-3 6-3 3 3 4 3"></path>
-          </svg>
+          <svg viewBox="0 0 28 28"><path d="M3 10c3 0 3-3 6-3s3 3 6 3 3-3 6-3 3 3 4 3"></path><path d="M3 15c3 0 3-3 6-3s3 3 6 3 3-3 6-3 3 3 4 3"></path><path d="M3 20c3 0 3-3 6-3s3 3 6 3 3-3 6-3 3 3 4 3"></path></svg>
         </span>
         <span>One minute for clarity.</span>
       </footer>
