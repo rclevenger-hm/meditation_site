@@ -1,7 +1,10 @@
-name: Deploy GitHub Pages
+name: Test & Deploy GitHub Pages
 
 on:
   push:
+    branches:
+      - main
+  pull_request:
     branches:
       - main
   workflow_dispatch:
@@ -12,8 +15,8 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
-  cancel-in-progress: false
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
@@ -31,6 +34,7 @@ jobs:
         run: npm test
 
   deploy:
+    if: github.event_name != 'pull_request'
     needs: test
     runs-on: ubuntu-latest
     environment:

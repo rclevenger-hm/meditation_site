@@ -1,0 +1,52 @@
+.skip-link {
+  background: #f6f3ea;
+  color: #020b10;
+  font-weight: 800;
+  left: 1rem;
+  padding: 0.7rem 1rem;
+  position: fixed;
+  top: 1rem;
+  transform: translateY(-220%);
+  z-index: 1000;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  .breath-field,
+  .breath-field[data-phase="hold"],
+  .breath-field[data-phase="exhale"] {
+    transform: none !important;
+  }
+
+  .progress {
+    filter: none;
+  }
+}
+
+@media (forced-colors: active) {
+  button,
+  select,
+  .mode-button,
+  .duration-button,
+  .control-button {
+    border: 1px solid ButtonText;
+  }
+
+  .progress,
+  .track,
+  svg path {
+    forced-color-adjust: auto;
+  }
+}
