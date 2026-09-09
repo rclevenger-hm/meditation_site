@@ -18,6 +18,27 @@ function assertFile(relativePath) {
   assert(statSync(path).size > 0, `Required file is empty: ${relativePath}`);
 }
 
+function assertMp3(relativePath) {
+  assertFile(relativePath);
+  const bytes = readFileSync(join(root, relativePath));
+  const hasId3 = bytes.length >= 3 && bytes.subarray(0, 3).toString("ascii") === "ID3";
+  let hasFrameSync = false;
+  for (let index = 0; index < Math.min(bytes.length - 1, 4096); index += 1) {
+    if (bytes[index] === 0xff && (bytes[index + 1] & 0xe0) === 0xe0) {
+      hasFrameSync = true;
+      break;
+    }
+  }
+  assert(hasId3 || hasFrameSync, `Expected MP3 header/frame sync in ${relativePath}`);
+}
+
+function assertPng(relativePath) {
+  assertFile(relativePath);
+  const bytes = readFileSync(join(root, relativePath));
+  const signature = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+  assert(signature.every((byte, index) => bytes[index] === byte), `Expected PNG signature in ${relativePath}`);
+}
+
 const html = read("index.html");
 const css = read("styles.css");
 const accessibility = read("accessibility.css");
@@ -46,13 +67,13 @@ assert(js.includes('audio.background.src = "assets/music/breath-tide.mp3";'), "B
 assert(js.includes("assets/audio/${state.routineKey}/stage-${stageIndex + 1}.mp3"), "Narration clip path is not configured");
 
 assertFile("accessibility.css");
-assertFile("assets/timer-ocean-clean.png");
-assertFile("assets/music/breath-tide.mp3");
+assertPng("assets/timer-ocean-clean.png");
+assertMp3("assets/music/breath-tide.mp3");
 
 for (const routine of routines) {
   const files = readdirSync(join(root, "assets", "audio", routine)).filter((file) => /^stage-[1-5]\.mp3$/.test(file));
   assert(files.length === 5, `Expected 5 stage clips for ${routine}, found ${files.length}`);
-  for (let index = 1; index <= 5; index += 1) assertFile(`assets/audio/${routine}/stage-${index}.mp3`);
+  for (let index = 1; index <= 5; index += 1) assertMp3(`assets/audio/${routine}/stage-${index}.mp3`);
 }
 
 assert(workflow.includes("actions/configure-pages@v5"), "Pages workflow should configure GitHub Pages");
