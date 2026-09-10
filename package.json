@@ -4,6 +4,6 @@
   "private": true,
   "description": "A static guided meditation app with narrated routines and looping ambient music.",
   "scripts": {
-    "test": "node tests/static.test.mjs"
+    "test": "node tests/static.test.mjs && node tests/selection-accessibility.test.mjs"
   }
 }
