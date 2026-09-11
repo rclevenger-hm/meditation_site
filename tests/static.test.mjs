@@ -1,5 +1,5 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join, normalize } from "node:path";
 
 const root = process.cwd();
 const routines = ["bodyScan", "light", "lovingKindness", "mantra", "mindfulness", "zenCounting"];
@@ -16,6 +16,25 @@ function assertFile(relativePath) {
   const path = join(root, relativePath);
   assert(existsSync(path), `Missing required file: ${relativePath}`);
   assert(statSync(path).size > 0, `Required file is empty: ${relativePath}`);
+}
+
+function localReference(value) {
+  const reference = value.trim();
+  if (!reference || reference.startsWith("#") || /^(?:https?:|mailto:|tel:|data:|javascript:|blob:)/i.test(reference)) return null;
+  const withoutQuery = reference.split(/[?#]/, 1)[0];
+  return withoutQuery ? decodeURIComponent(withoutQuery) : null;
+}
+
+function assertLocalReferences(sourcePath, source, pattern) {
+  const sourceDirectory = dirname(sourcePath);
+  for (const match of source.matchAll(pattern)) {
+    const reference = localReference(match[1]);
+    if (!reference) continue;
+    assert(!reference.startsWith("/"), `${sourcePath} should use repository-relative asset paths: ${reference}`);
+    const resolved = normalize(join(sourceDirectory, reference));
+    assert(!resolved.startsWith(".."), `${sourcePath} reference escapes the published site: ${reference}`);
+    assertFile(resolved);
+  }
 }
 
 function assertMp3(relativePath) {
@@ -65,6 +84,10 @@ assert(accessibility.includes("animation-duration: 0.001ms"), "Reduced-motion ru
 assert(js.includes("const durationOptions = [60, 300, 600, 1200, 3600];"), "Expected meditation durations are missing");
 assert(js.includes('audio.background.src = "assets/music/breath-tide.mp3";'), "Background music source is not configured");
 assert(js.includes("assets/audio/${state.routineKey}/stage-${stageIndex + 1}.mp3"), "Narration clip path is not configured");
+
+assertLocalReferences("index.html", html, /(?:href|src)=["']([^"']+)["']/g);
+assertLocalReferences("styles.css", css, /url\(["']?([^"')]+)["']?\)/g);
+assertLocalReferences("accessibility.css", accessibility, /url\(["']?([^"')]+)["']?\)/g);
 
 assertFile("accessibility.css");
 assertPng("assets/timer-ocean-clean.png");
