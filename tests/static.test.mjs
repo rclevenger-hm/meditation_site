@@ -93,7 +93,17 @@ assertFile("accessibility.css");
 assertPng("assets/timer-ocean-clean.png");
 assertMp3("assets/music/breath-tide.mp3");
 
+const audioRoot = join(root, "assets", "audio");
+const audioRoutineDirectories = readdirSync(audioRoot)
+  .filter((name) => statSync(join(audioRoot, name)).isDirectory())
+  .sort();
+assert(
+  JSON.stringify(audioRoutineDirectories) === JSON.stringify([...routines].sort()),
+  `Routine/audio catalog drift detected: expected ${routines.join(", ")}; found ${audioRoutineDirectories.join(", ")}`,
+);
+
 for (const routine of routines) {
+  assert(js.includes(`  ${routine}: {`), `script.js is missing routine configuration for ${routine}`);
   const files = readdirSync(join(root, "assets", "audio", routine)).filter((file) => /^stage-[1-5]\.mp3$/.test(file));
   assert(files.length === 5, `Expected 5 stage clips for ${routine}, found ${files.length}`);
   for (let index = 1; index <= 5; index += 1) assertMp3(`assets/audio/${routine}/stage-${index}.mp3`);
