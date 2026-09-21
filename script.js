@@ -322,7 +322,6 @@ function getStageRanges(stages) {
 
 function formatTime(seconds) {
   const clamped = Math.max(0, Math.ceil(seconds));
-  if (clamped === 60) return "00:60";
   const minutes = Math.floor(clamped / 60);
   const remainingSeconds = clamped % 60;
   return `${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
