@@ -82,6 +82,8 @@ assert(accessibility.includes("prefers-reduced-motion: reduce"), "Reduced-motion
 assert(accessibility.includes("forced-colors: active"), "Forced-colors mode should retain control boundaries");
 assert(accessibility.includes("animation-duration: 0.001ms"), "Reduced-motion rules must suppress looping animation");
 assert(js.includes("const durationOptions = [60, 300, 600, 1200, 3600];"), "Expected meditation durations are missing");
+assert(!js.includes('return "00:60"'), "One-minute timer must render as 01:00 rather than 00:60");
+assert(js.includes("Math.floor(clamped / 60)") && js.includes("clamped % 60"), "Timer display must normalize seconds into minutes and seconds");
 assert(js.includes('audio.background.src = "assets/music/breath-tide.mp3";'), "Background music source is not configured");
 assert(js.includes("assets/audio/${state.routineKey}/stage-${stageIndex + 1}.mp3"), "Narration clip path is not configured");
 
