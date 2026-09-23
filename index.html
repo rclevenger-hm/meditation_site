@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; img-src 'self' data:; media-src 'self'; style-src 'self'; script-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
+      content="default-src 'self'; img-src 'self' data:; media-src 'self'; style-src 'self'; script-src 'self' https://static.cloudflareinsights.com; connect-src https://cloudflareinsights.com; object-src 'none'; base-uri 'none'; form-action 'none'"
     >
     <meta name="referrer" content="no-referrer">
     <title>Guided Meditation Library</title>
@@ -143,5 +143,6 @@
 
     <script src="script.js?v=13"></script>
     <script src="selection-accessibility.js?v=1"></script>
+    <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"5622984e1fc6491f8ab1d361b31710d7"}'></script>
   </body>
 </html>
