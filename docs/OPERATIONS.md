@@ -61,3 +61,19 @@ Avoid force-pushing `main` or manually replacing Pages artifacts. Keeping rollba
 ## Operational ownership
 
 When adding a new meditation style or asset set, update tests or validation so missing files fail before deploy. When adding any network-backed feature later, document its timeout, offline behavior, privacy boundary, and failure mode here before treating it as production-ready.
+
+
+## Browser media compatibility matrix
+
+Before a release that changes playback, narration, timing, or media assets, run the media smoke test in current desktop Chrome, Firefox, and Safari. The goal is not identical browser internals; it is a consistent user-visible fallback when media APIs behave differently.
+
+| Scenario | Expected behavior | Release blocker |
+| --- | --- | --- |
+| Narration clip loads | Stage narration plays once and advances with the timer. | Missing/duplicated narration or an uncaught media error. |
+| Narration `play()` is rejected | The existing speech-synthesis fallback speaks the stage without stopping the timer. | Timer stops, controls become unusable, or rejection is uncaught. |
+| Ambient track `play()` is rejected | Meditation continues silently; pause/restart controls still work. | Unhandled rejection or broken controls. |
+| Media asset returns 404 | Network/console evidence identifies the missing path; release is rolled back or fixed before promotion. | Any referenced release asset is missing. |
+| Page is backgrounded and restored | Timer state remains coherent and audio does not multiply into overlapping playback. | Duplicate narration/music or a timer jump that skips the final state. |
+| Autoplay is blocked before user gesture | No retry loop occurs; playback begins only after an explicit user action. | Repeated autoplay attempts, console error loop, or inaccessible start control. |
+
+Capture the browser/version, scenario, and observed result in the PR when a playback-affecting change is reviewed. This keeps browser-specific regressions visible without adding external telemetry to a privacy-first static site.
