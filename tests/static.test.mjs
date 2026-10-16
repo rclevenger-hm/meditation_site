@@ -73,7 +73,7 @@ try {
 assert(html.includes("<title>Guided Meditation Library</title>"), "Document title should match the app name");
 assert(html.includes('href="styles.css?v=11"'), "HTML should load the cache-busted stylesheet");
 assert(html.includes('href="accessibility.css?v=1"'), "HTML should load accessibility overrides");
-assert(html.includes('src="script.js?v=13"'), "HTML should load the cache-busted script");
+assert(html.includes('src="script.js?v=14"'), "HTML should load the cache-busted script");
 assert(html.includes('class="skip-link"'), "Page should expose keyboard skip navigation");
 assert(html.includes('id="meditation-practice"'), "Skip navigation target is missing");
 assert(css.includes('url("assets/timer-ocean-clean.png")'), "Timer should use the cleaned ocean artwork");

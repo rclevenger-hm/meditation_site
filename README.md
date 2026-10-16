@@ -30,7 +30,17 @@ http://127.0.0.1:4173/
 npm test
 ```
 
-The tests validate the JavaScript syntax, required static assets, meditation audio clips, and the GitHub Pages workflow.
+The dependency-free tests validate the static release and exercise interrupted narration, speech fallback, tone cancellation, restart, and timer completion.
+
+Run the Chromium media regression suite as well:
+
+```bash
+npm ci
+npx playwright install chromium --with-deps
+npm run test:browser
+```
+
+The browser suite covers failed/pending playback, routine and duration changes, pause/restart, stage transitions, completion, and real playback of the packaged narration and music. Chromium runs headless; the playback assertions check media state, not speaker output. CI runs both suites before deployment. To use an existing Chromium installation locally, set `CHROMIUM_PATH` to its executable path.
 
 ## Deploy
 
