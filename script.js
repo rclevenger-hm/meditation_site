@@ -272,6 +272,8 @@ const audio = {
   master: null,
   toneCache: new Map(),
   activeCues: new Set(),
+  pendingCueTimers: new Set(),
+  activeOscillators: new Set(),
   narration: null,
   background: null,
   backgroundFadeId: null,
@@ -364,13 +366,17 @@ function render() {
   remaining.textContent = formatTime(state.duration - elapsed);
   progressRing.style.strokeDashoffset = String(ringLength * (1 - progress));
 
-  if (state.hasStartedAudio && stageIndex !== state.lastStageIndex && elapsed < state.duration) {
+  if (state.isRunning && state.hasStartedAudio && stageIndex !== state.lastStageIndex && elapsed < state.duration) {
     playStageCue(stageIndex);
     speakStage(stageIndex);
   }
 
   if (state.hasStartedAudio && elapsed >= state.duration && !state.completionCuePlayed) {
     state.completionCuePlayed = true;
+    state.isRunning = false;
+    state.lastTick = 0;
+    state.frameId = null;
+    stopAudioCues({ suspendContext: false });
     playCompletionCue();
     fadeOutBackgroundMusic();
   }
@@ -436,11 +442,12 @@ function resetTimer({ keepRunning = false, speak = false } = {}) {
   state.completionCuePlayed = false;
   state.isRunning = keepRunning;
   if (keepRunning) {
+    enableAudio();
     playBackgroundMusic({ restart: true });
-  }
-  if (speak && state.hasStartedAudio) {
-    playRestartCue();
-    speakStage(0);
+    if (speak && state.hasStartedAudio) {
+      playRestartCue();
+      speakStage(0);
+    }
   }
   if (keepRunning) {
     state.frameId = requestAnimationFrame(tick);
@@ -449,6 +456,7 @@ function resetTimer({ keepRunning = false, speak = false } = {}) {
 }
 
 function start() {
+  stopAudioCues({ suspendContext: false });
   const shouldRestartBackground = state.elapsed >= state.duration || state.elapsed === 0;
   if (state.elapsed >= state.duration) state.elapsed = 0;
   state.completionCuePlayed = false;
@@ -459,7 +467,8 @@ function start() {
   enableAudio();
   playBackgroundMusic({ restart: shouldRestartBackground });
   playStartCue();
-  speakStage(getStageIndex(state.elapsed));
+  state.lastStageIndex = getStageIndex(state.elapsed);
+  speakStage(state.lastStageIndex);
   state.frameId = requestAnimationFrame(tick);
   render();
 }
@@ -510,7 +519,7 @@ voiceSelect.addEventListener("change", () => {
 
 function enableAudio() {
   if (audio.context) {
-    audio.context.resume?.();
+    audio.context.resume?.().catch(() => {});
     return;
   }
 
@@ -525,7 +534,11 @@ function enableAudio() {
 
 function playTone(frequency, startOffset, duration, type = "sine", volume = 0.5) {
   if (!audio.context || !audio.master) {
-    window.setTimeout(() => playToneFallback(frequency, duration, volume), startOffset * 1000);
+    const timerId = window.setTimeout(() => {
+      audio.pendingCueTimers.delete(timerId);
+      playToneFallback(frequency, duration, volume);
+    }, startOffset * 1000);
+    audio.pendingCueTimers.add(timerId);
     return;
   }
 
@@ -541,6 +554,8 @@ function playTone(frequency, startOffset, duration, type = "sine", volume = 0.5)
 
   oscillator.connect(gain);
   gain.connect(audio.master);
+  audio.activeOscillators.add(oscillator);
+  oscillator.addEventListener("ended", () => audio.activeOscillators.delete(oscillator), { once: true });
   oscillator.start(startAt);
   oscillator.stop(startAt + duration + 0.03);
 }
@@ -558,7 +573,7 @@ function playToneFallback(frequency, duration, volume) {
   cue.volume = Math.min(1, Math.max(0, volume));
   audio.activeCues.add(cue);
   cue.addEventListener("ended", () => audio.activeCues.delete(cue), { once: true });
-  cue.play().catch(() => {});
+  cue.play().catch(() => audio.activeCues.delete(cue));
 }
 
 function createToneDataUrl(frequency, duration, volume) {
@@ -638,10 +653,7 @@ function speakStage(stageIndex) {
 function playNarrationClip(stageIndex, fallbackText) {
   if (!document?.createElement) return false;
 
-  if (audio.narration) {
-    audio.narration.pause();
-    audio.narration.currentTime = 0;
-  }
+  stopNarration();
 
   const clip = document.createElement("audio");
   clip.src = `assets/audio/${state.routineKey}/stage-${stageIndex + 1}.mp3`;
@@ -649,7 +661,9 @@ function playNarrationClip(stageIndex, fallbackText) {
   clip.volume = 0.96;
   audio.narration = clip;
   clip.play().catch(() => {
-    if (audio.narration === clip) audio.narration = null;
+    // A rejected play can settle after Pause, reset, or a newer stage.
+    if (audio.narration !== clip) return;
+    audio.narration = null;
     speakText(fallbackText);
   });
   return true;
@@ -766,13 +780,25 @@ function getSelectedVoice() {
   return voiceState.voices.find((voice) => voice.voiceURI === voiceState.selectedVoiceURI) || chooseWarmVoice(voiceState.voices);
 }
 
-function stopAudioCues() {
-  if ("speechSynthesis" in window) {
-    window.speechSynthesis.cancel();
+function stopNarration() {
+  if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+  const narration = audio.narration;
+  audio.narration = null;
+  if (narration) {
+    narration.pause();
+    narration.currentTime = 0;
   }
+}
 
-  if (audio.context?.state === "running") {
-    audio.context.suspend?.();
+function stopAudioCues({ suspendContext = true } = {}) {
+  stopNarration();
+  audio.pendingCueTimers.forEach(timerId => window.clearTimeout(timerId));
+  audio.pendingCueTimers.clear();
+  audio.activeOscillators.forEach(oscillator => oscillator.stop());
+  audio.activeOscillators.clear();
+
+  if (suspendContext && audio.context?.state === "running") {
+    audio.context.suspend?.().catch(() => {});
   }
 
   audio.activeCues.forEach((cue) => {
@@ -780,12 +806,6 @@ function stopAudioCues() {
     cue.currentTime = 0;
   });
   audio.activeCues.clear();
-
-  if (audio.narration) {
-    audio.narration.pause();
-    audio.narration.currentTime = 0;
-    audio.narration = null;
-  }
 }
 
 state.stages = buildStages(routines[state.routineKey], state.duration);

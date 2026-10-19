@@ -6,11 +6,11 @@ This site is intentionally static, but it still has runtime dependencies: HTML/C
 
 Before merging a change:
 
-1. Run `npm test` from the repository root.
+1. Run `npm test` and `npm run test:browser` from the repository root (see README for the browser test setup).
 2. Run `node --check script.js` if JavaScript changed.
 3. Serve the repository locally with `python -m http.server 4173 --bind 127.0.0.1`.
 4. Exercise at least one short and one long meditation preset.
-5. Verify narration advances between stages and background audio can start, pause, and resume.
+5. Verify narration advances between stages and background audio can start, pause, and resume. Pause or change the routine while a clip is loading: the old narration must stay silent. Restarting a paused session resets it without playing audio. At completion, one Start click begins a fresh session.
 6. Verify keyboard navigation reaches the primary controls and the skip link.
 7. Check the page with reduced motion enabled at the OS/browser level.
 8. Confirm the browser console has no uncaught errors or missing-asset 404s.
