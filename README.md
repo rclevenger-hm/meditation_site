@@ -42,6 +42,13 @@ npm run test:browser
 
 The browser suite covers failed/pending playback, routine and duration changes, pause/restart, stage transitions, completion, and real playback of the packaged narration and music. Chromium runs headless; the playback assertions check media state, not speaker output. CI runs both suites before deployment. To use an existing Chromium installation locally, set `CHROMIUM_PATH` to its executable path.
 
+## Navigating away from a session
+
+Leaving the page pauses the timer and all session audio, including completion
+cues. If the browser restores the page from its back/forward cache, the session
+stays paused at its existing progress; press Start to continue. A full reload
+still starts a new session. Switching tabs alone does not pause a practice.
+
 ## Deploy
 
 The included GitHub Actions workflow deploys to GitHub Pages whenever changes are pushed to `main`.

@@ -166,3 +166,42 @@ test("packaged narration and background music load and play in Chromium", async 
   await pause(page);
   assert.equal(await page.evaluate(() => audio.background.paused), true);
 });
+
+test("pagehide pauses media and restored sessions require explicit resume", async t => {
+  const page = await openApp(t);
+  await start(page);
+  await page.clock.runFor(10000);
+  const remaining = await page.locator("#remaining").textContent();
+  await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent("pagehide", { persisted: true })));
+  assert.equal(await page.locator("#start-pause").getAttribute("aria-label"), "Start routine");
+  await page.evaluate(() => {
+    window.testMedia.fail(0);
+    window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: true }));
+  });
+  await page.clock.runFor(100000);
+  assert.equal(await page.locator("#remaining").textContent(), remaining);
+  assert.deepEqual(await spoken(page), []);
+  assert.ok(await page.evaluate(() => window.testMedia.pauses.some(src => src.includes("/assets/music/"))));
+  const count = await page.evaluate(() => window.testMedia.pending.length);
+  await start(page);
+  assert.equal(await page.evaluate(() => window.testMedia.pending.length), count + 1);
+  await page.clock.runFor(2000);
+  assert.notEqual(await page.locator("#remaining").textContent(), remaining);
+});
+
+test("real navigation runs pagehide cleanup before leaving and Back stays idle", async t => {
+  const page = await openApp(t);
+  await start(page);
+  await page.clock.runFor(1000);
+  await page.evaluate(() => window.addEventListener("pagehide", () => {
+    sessionStorage.setItem("navigation-state", JSON.stringify({
+      running: state.isRunning, frame: state.frameId,
+      narration: audio.narration, backgroundPaused: window.testMedia.pauses.some(src => src.includes("/assets/music/")),
+    }));
+  }));
+  await page.goto(`${origin}/away`);
+  const snapshot = await page.evaluate(() => JSON.parse(sessionStorage.getItem("navigation-state")));
+  assert.deepEqual(snapshot, { running: false, frame: null, narration: null, backgroundPaused: true });
+  await page.goBack();
+  assert.equal(await page.locator("#start-pause").getAttribute("aria-label"), "Start routine");
+});
