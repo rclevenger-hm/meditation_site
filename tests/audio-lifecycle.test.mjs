@@ -18,7 +18,7 @@ function app({ webAudio = false } = {}) {
     };
   }
   const tracks = [], pending = [], spoken = [], oscillators = [];
-  const timeouts = new Map(), frames = new Map();
+  const timeouts = new Map(), frames = new Map(), listeners = new Map();
   let nextId = 1, cancels = 0;
   const context = vm.createContext({
     console, btoa: input => Buffer.from(input, "binary").toString("base64"),
@@ -46,6 +46,7 @@ function app({ webAudio = false } = {}) {
   });
   const gain = () => ({ connect() {}, gain: { setValueAtTime() {}, exponentialRampToValueAtTime() {} } });
   context.window = {
+    addEventListener(type, callback) { listeners.set(type, callback); },
     speechSynthesis: { getVoices: () => [], addEventListener() {}, cancel() { cancels += 1; }, speak(utterance) { spoken.push(utterance.text); } },
     setTimeout(callback) { const id = nextId++; timeouts.set(id, callback); return id; },
     clearTimeout(id) { timeouts.delete(id); },
@@ -66,6 +67,7 @@ function app({ webAudio = false } = {}) {
   };
   vm.runInContext(source, context);
   return { context, tracks, pending, spoken, oscillators, timeouts, frames,
+    dispatch: type => listeners.get(type)?.(),
     read: expression => vm.runInContext(expression, context),
     get cancels() { return cancels; },
     async fail(index) { pending[index].reject(new Error("Unsupported audio")); await Promise.resolve(); },
@@ -166,3 +168,34 @@ for (const webAudio of [false, true]) {
     }
   });
 }
+
+for (const webAudio of [false, true]) {
+  test(`page navigation pauses the session and silences pending media (${webAudio ? "Web Audio" : "fallback"})`, async () => {
+    const a = app({ webAudio }); a.context.start();
+    a.context.tick(1000); a.context.tick(11000);
+    a.dispatch("pagehide");
+    assert.equal(a.read("state.isRunning"), false);
+    assert.equal(a.read("state.frameId"), null);
+    assert.equal(a.read("state.elapsed"), 10, "navigation preserves progress");
+    assert.ok(a.tracks.every(track => track.pauseCount > 0));
+    a.flushTimeouts(); await a.fail(0);
+    assert.deepEqual(a.spoken, []);
+    if (webAudio) assert.equal(a.read("audio.context.state"), "suspended");
+    a.dispatch("pageshow");
+    a.context.tick(100000);
+    assert.equal(a.read("state.elapsed"), 10, "return does not silently advance or resume");
+    a.context.start(); a.context.tick(100000); a.context.tick(101000);
+    assert.equal(a.read("state.elapsed"), 11, "explicit resume continues existing session");
+  });
+}
+
+test("page navigation cancels completion audio and repeated navigation stays idle", () => {
+  const a = app(); a.context.start(); a.context.tick(1000); a.context.tick(62000);
+  a.dispatch("pagehide"); a.flushTimeouts();
+  assert.equal(a.timeouts.size, 0);
+  assert.ok(a.tracks.every(track => track.pauseCount > 0));
+  const playCount = a.tracks.reduce((sum, track) => sum + track.playCount, 0);
+  a.dispatch("pagehide"); a.dispatch("pageshow");
+  assert.equal(a.tracks.reduce((sum, track) => sum + track.playCount, 0), playCount);
+  assert.equal(a.read("state.isRunning"), false);
+});

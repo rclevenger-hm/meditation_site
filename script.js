@@ -506,6 +506,10 @@ startPauseButton.addEventListener("click", () => {
   }
 });
 
+// Stop media before navigation or a back/forward-cache freeze. Preserve progress,
+// but require an explicit Start after returning rather than resuming unexpectedly.
+window.addEventListener("pagehide", pause);
+
 restartButton.addEventListener("click", restart);
 modeButtons.forEach((button) => {
   button.addEventListener("click", () => selectRoutine(button.dataset.routine));
