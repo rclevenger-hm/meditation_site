@@ -166,3 +166,23 @@ test("packaged narration and background music load and play in Chromium", async 
   await pause(page);
   assert.equal(await page.evaluate(() => audio.background.paused), true);
 });
+
+test("countdown ticks do not rewrite live guidance between stages", async t => {
+  const page = await openApp(t);
+  const timer = page.getByRole("timer", { name: "Time remaining" });
+  assert.equal(await timer.textContent().then(text => text.trim()), "01:00");
+  assert.equal(await timer.getAttribute("aria-live"), null, "role timer defaults to aria-live off");
+  await start(page);
+  await page.evaluate(() => {
+    window.guidanceMutations = 0;
+    new MutationObserver(records => { window.guidanceMutations += records.length; })
+      .observe(document.querySelector(".guidance"), { childList: true, subtree: true, characterData: true });
+  });
+
+  await page.clock.runFor(3000);
+  assert.notEqual(await timer.textContent().then(text => text.trim()), "01:00");
+  assert.equal(await page.evaluate(() => window.guidanceMutations), 0);
+
+  await page.clock.runFor(13000);
+  assert.ok(await page.evaluate(() => window.guidanceMutations) > 0, "a new stage still updates live guidance");
+});

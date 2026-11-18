@@ -353,6 +353,10 @@ function getBreathPhase(elapsed, stageIndex) {
   return ["exhale", "Exhale gently"];
 }
 
+function updateText(element, text) {
+  if (element.textContent !== text) element.textContent = text;
+}
+
 function render() {
   const routine = routines[state.routineKey];
   const elapsed = Math.min(state.elapsed, state.duration);
@@ -382,13 +386,15 @@ function render() {
   }
 
   state.lastStageIndex = stageIndex;
-  stageCount.textContent = `Step ${stageIndex + 1} of ${state.stages.length}`;
-  stageTitle.textContent = stage.title;
-  stageInstruction.textContent = stage.instruction;
+  updateText(stageCount, `Step ${stageIndex + 1} of ${state.stages.length}`);
+  updateText(stageTitle, stage.title);
+  updateText(stageInstruction, stage.instruction);
   phaseLabel.textContent = label;
   breathOrb.dataset.phase = phase;
-  anchorLabel.textContent = routine.cueLabel;
-  anchorPhrase.innerHTML = `<span aria-hidden="true">&ldquo;</span>${routine.cue}<span aria-hidden="true">&rdquo;</span>`;
+  updateText(anchorLabel, routine.cueLabel);
+  if (anchorPhrase.textContent !== `“${routine.cue}”`) {
+    anchorPhrase.innerHTML = `<span aria-hidden="true">&ldquo;</span>${routine.cue}<span aria-hidden="true">&rdquo;</span>`;
+  }
   footerLine.textContent = routine.footer;
 
   stepItems.forEach((item, index) => {
